@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z, ZodTypeAny } from "zod";
 
 //  string, boolean, number
@@ -15,7 +15,7 @@ const determineSchemaType = (schema: any) => {
   return schema.type;
 };
 
-const jsonSchemaToZod = (schema: any) => {
+const jsonSchemaToZod = (schema: any): ZodTypeAny => {
   const type = determineSchemaType(schema);
 
   switch (type) {
@@ -79,10 +79,22 @@ export const POST = async (req: NextRequest) => {
     }
   }
 
-  const idk = RetryablePromise.retry(5, (resolve, reject) => {
-    try {
-    } catch (err) {}
-  });
+  const validationResult = RetryablePromise.retry<object>(
+    5,
+    (resolve, reject) => {
+      try {
+        //call ai
+        const res = "{name: 'Malik'}";
 
-  return new Response("OK");
+        //validate json
+        const validationResult = dynamicSchema.parse(JSON.parse(res));
+
+        return resolve(validationResult);
+      } catch (err) {
+        reject(err);
+      }
+    }
+  );
+
+  return NextResponse.json(validationResult, { status: 200 });
 };
